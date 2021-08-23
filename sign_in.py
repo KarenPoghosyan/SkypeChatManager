@@ -87,6 +87,6 @@ class Ui_Dialog_SignIn(object):
 
     def retranslateUi(self, Dialog_SignIn):
         _translate = QtCore.QCoreApplication.translate
-        Dialog_SignIn.setWindowTitle(_translate("Dialog_SignIn", "Sign-In"))
+        Dialog_SignIn.setWindowTitle(_translate("Dialog_SignIn", "DA ChatManager"))
         self.label_login.setText(_translate("Dialog_SignIn", " Login:"))
         self.label_password.setText(_translate("Dialog_SignIn", " Password:"))
