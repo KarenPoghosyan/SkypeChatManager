@@ -17,7 +17,10 @@ from PyQt5.QtWidgets import QMessageBox
 import json
 import skype_handler
 import urllib.request
+import os
+import logging
 
+working_dir = "."
 
 class QCustomQWidget (QWidget):
     def __init__ (self, parent = None):
@@ -100,7 +103,7 @@ class Ui_MainWindow(object):
 
     def get_contacts_list(self):
 
-        chats_list = json.load(open("./chats_list.json"))
+        chats_list = json.load(open(working_dir + "/chats_list.json"))
 
         for c in self.sk.get_contacts():
             if c.id in self.skip_contacts:
@@ -163,7 +166,7 @@ class Ui_MainWindow(object):
 
 
     def create_chat_list(self):
-        chats_list = json.load(open("./chats_list.json"))
+        chats_list = json.load(open(working_dir + "/chats_list.json"))
 
         for chat_id in chats_list["chats_only"].keys():
             chat = self.sk.get_chat(chat_id)
@@ -249,18 +252,26 @@ class Ui_MainWindow(object):
 
         self.pushButton_remove.hide()
 
-
+        abs_path = os.path.abspath(working_dir + '/ChatManager.log')
+        logging.basicConfig(filename=abs_path, encoding='utf-8', level=logging.DEBUG, force=True)
 
         try:
             self.sk = skype_handler.SkypeHandler()
             self.sk.connect(self.login, self.password)
+            logging.debug("Connected")
         except Exception as err:
+            logging.critical('Connection Error: ' + str(err))
             QMessageBox.critical(QWidget(), "Connection Error", str(err))
             exit(1)
 
-        self.skip_contacts = ["0d5d6cff-595d-49d7-9cf8-973173f5233b", "echo123", "concierge"]
-        self.create_contacts_list()
-        self.create_chat_list()
+        try:
+            self.skip_contacts = ["0d5d6cff-595d-49d7-9cf8-973173f5233b", "echo123", "concierge"]
+            self.create_contacts_list()
+            self.create_chat_list()
+        except Exception as err:
+            logging.critical('Lists creation failed: ' + str(err))
+            QMessageBox.critical(QWidget(), "Lists creation failed", str(err))
+            exit(1)
 
 
 
