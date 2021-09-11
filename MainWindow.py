@@ -19,6 +19,8 @@ import skype_handler
 import urllib.request
 import os
 import logging
+import pathlib
+
 
 working_dir = "."
 
@@ -103,6 +105,8 @@ class Ui_MainWindow(object):
 
     def get_contacts_list(self):
 
+        working_dir = str(pathlib.Path(__file__).parent.resolve())
+
         chats_list = json.load(open(working_dir + "/chats_list.json"))
 
         for c in self.sk.get_contacts():
@@ -166,6 +170,7 @@ class Ui_MainWindow(object):
 
 
     def create_chat_list(self):
+        working_dir = str(pathlib.Path(__file__).parent.resolve())
         chats_list = json.load(open(working_dir + "/chats_list.json"))
 
         for chat_id in chats_list["chats_only"].keys():
@@ -251,6 +256,8 @@ class Ui_MainWindow(object):
         #print(self.login)
 
         self.pushButton_remove.hide()
+
+        working_dir = str(pathlib.Path(__file__).parent.resolve())
 
         abs_path = os.path.abspath(working_dir + '/ChatManager.log')
         logging.basicConfig(filename=abs_path, encoding='utf-8', level=logging.DEBUG, force=True)
