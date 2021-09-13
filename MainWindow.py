@@ -173,6 +173,16 @@ class Ui_MainWindow(object):
         working_dir = str(pathlib.Path(__file__).parent.resolve())
         chats_list = json.load(open(working_dir + "/chats_list.json"))
 
+        # get Recent chats
+        logging.debug("Recent chats ")
+        rc_chats = self.sk.get_chats()
+        if hasattr(rc_chats, 'skype'):
+            for chat_id, val in rc_chats.skype.chats.cache.items():
+                if str(chat_id).startswith("19:"):
+                    if str(chat_id) not in chats_list["chats_only"]:
+                        logging.debug('"' + str(chat_id) + '": "' + str(val.topic) + '"')
+
+
         for chat_id in chats_list["chats_only"].keys():
             chat = self.sk.get_chat(chat_id)
 
@@ -194,6 +204,8 @@ class Ui_MainWindow(object):
             # Add QListWidgetItem into QListWidget
             self.listWidget_2.addItem(myQListWidgetItem)
             self.listWidget_2.setItemWidget(myQListWidgetItem, myQCustomQWidget)
+
+
 
     def add_contacts(self):
         for user_index in range(self.listWidget.count()):
@@ -285,6 +297,6 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Skype Chat Manager"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "DA Skype Manager"))
         self.pushButton_add.setText(_translate("MainWindow", "Add -->"))
         self.pushButton_remove.setText(_translate("MainWindow", "Remove <--X"))
