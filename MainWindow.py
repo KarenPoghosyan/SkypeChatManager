@@ -181,6 +181,7 @@ class Ui_MainWindow(object):
                 if str(chat_id).startswith("19:"):
                     if str(chat_id) not in chats_list["chats_only"]:
                         logging.debug('"' + str(chat_id) + '": "' + str(val.topic) + '"')
+                        #chats_list["chats_only"][str(chat_id)] = str(val.topic)
 
 
         for chat_id in chats_list["chats_only"].keys():
