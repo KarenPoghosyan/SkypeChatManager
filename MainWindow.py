@@ -124,87 +124,106 @@ class Ui_MainWindow(object):
         return ret_str[:ind]
 
     def create_contacts_list(self):
-        self.get_contacts_list()
-        #sort
-        self.contacts_list.sort(key=lambda r: r.raw['creation_time'], reverse=True)
+        try:
+            logging.info('Creating contacts list')
+            self.get_contacts_list()
+            #sort
+            self.contacts_list.sort(key=lambda r: r.raw['creation_time'], reverse=True)
 
-        for c in self.contacts_list:
-            #print(c.id + " " + str(c.name) + " " + c.raw['creation_time'])
-            self.map_lstID2contact[self.listWidget.count()] = c
+            for c in self.contacts_list:
+                #print(c.gid + " " + str(c.name) + " " + c.raw['creation_time'])
 
-            # Create QCustomQWidget
-            myQCustomQWidget = QCustomQWidget()
+                self.map_lstID2contact[self.listWidget.count()] = c
 
-            if c.name:
-                myQCustomQWidget.setTextUp(str(c.name))
-            else:
-                myQCustomQWidget.setTextUp(str(c.id))
+                # Create QCustomQWidget
+                myQCustomQWidget = QCustomQWidget()
 
-            myQCustomQWidget.setTextDown("Created on: " + self.clean_dt(c.raw['creation_time']))
-            if c.avatar:
-                #pass
-                local_filename, headers = urllib.request.urlretrieve(c.avatar)
-                myQCustomQWidget.setAvatar_image(local_filename)
-            else:
-                lst = str(c.name).split(' ')
-                if len(lst) > 1:
-                    myQCustomQWidget.setAvatar_default(lst[0][0] + lst[1][0])
+                if c.name:
+                    logging.debug(str(c.name))
+                    myQCustomQWidget.setTextUp(str(c.name))
                 else:
-                    myQCustomQWidget.setAvatar_default(str(c.name)[0: 2])
+                    logging.debug(str(c.id))
+                    myQCustomQWidget.setTextUp(str(c.id))
+
+                myQCustomQWidget.setTextDown("Created on: " + self.clean_dt(c.raw['creation_time']))
+                if c.avatar:
+                    #pass
+                    local_filename, headers = urllib.request.urlretrieve(c.avatar)
+                    myQCustomQWidget.setAvatar_image(local_filename)
+                else:
+                    lst = str(c.name).split(' ')
+                    if len(lst) > 1:
+                        myQCustomQWidget.setAvatar_default(lst[0][0] + lst[1][0])
+                    else:
+                        myQCustomQWidget.setAvatar_default(str(c.name)[0: 2])
 
 
 
-            myQCustomQWidget.unsetChBox()
+                myQCustomQWidget.unsetChBox()
 
-            # Create QListWidgetItem
-            myQListWidgetItem = QListWidgetItem(self.listWidget)
-            # Set size hint
-            myQListWidgetItem.setSizeHint(myQCustomQWidget.sizeHint())
-            # Add QListWidgetItem into QListWidget
-            self.listWidget.addItem(myQListWidgetItem)
-            self.listWidget.setItemWidget(myQListWidgetItem, myQCustomQWidget)
+                # Create QListWidgetItem
+                myQListWidgetItem = QListWidgetItem(self.listWidget)
+                # Set size hint
+                myQListWidgetItem.setSizeHint(myQCustomQWidget.sizeHint())
+                # Add QListWidgetItem into QListWidget
+                self.listWidget.addItem(myQListWidgetItem)
+                self.listWidget.setItemWidget(myQListWidgetItem, myQCustomQWidget)
 
-            self.listWidget.item(0).setSelected(True)
+                self.listWidget.item(0).setSelected(True)
+        except Exception as err:
+            logging.critical('Contacts lists creation failed: ' + str(err))
+            QMessageBox.critical(QWidget(), "Contacts creation failed", str(err))
+            exit(1)
 
 
 
 
     def create_chat_list(self):
-        working_dir = str(pathlib.Path(__file__).parent.resolve())
-        chats_list = json.load(open(working_dir + "/chats_list.json"))
+        try:
+            logging.info('Creating chats list')
+            working_dir = str(pathlib.Path(__file__).parent.resolve())
+            chats_list = json.load(open(working_dir + "/chats_list.json"))
 
-        # get Recent chats
-        logging.debug("Recent chats ")
-        rc_chats = self.sk.get_chats()
-        if hasattr(rc_chats, 'skype'):
-            for chat_id, val in rc_chats.skype.chats.cache.items():
-                if str(chat_id).startswith("19:"):
-                    if str(chat_id) not in chats_list["chats_only"]:
-                        logging.debug('"' + str(chat_id) + '": "' + str(val.topic) + '"')
-                        #chats_list["chats_only"][str(chat_id)] = str(val.topic)
+            # get Recent chats
+            logging.debug("Recent chats ")
+            rc_chats = self.sk.get_chats()
+            if hasattr(rc_chats, 'skype'):
+                for chat_id, val in rc_chats.skype.chats.cache.items():
+                    if str(chat_id).startswith("19:"):
+                        if str(chat_id) not in chats_list["chats_only"]:
+                            logging.debug('"' + str(chat_id) + '": "' + str(val.topic) + '"')
+                            #chats_list["chats_only"][str(chat_id)] = str(val.topic)
 
 
-        for chat_id in chats_list["chats_only"].keys():
-            chat = self.sk.get_chat(chat_id)
+            for chat_id in chats_list["chats_only"].keys():
 
-            self.map_lstID2chat[self.listWidget_2.count()] = chat
+                chat = self.sk.get_chat(chat_id)
 
-            # Create QCustomQWidget
-            myQCustomQWidget = QCustomQWidget()
-            myQCustomQWidget.setTextUp(str(chat.topic))
-            myQCustomQWidget.setTextDown("Creator: " + str(chat.creator.name))
-            #if hasattr(chat, "picture"):
-            #    local_filename, headers = urllib.request.urlretrieve(chat.picture)
-            #    myQCustomQWidget.setIcon(local_filename)
-            myQCustomQWidget.unsetChBox()
+                logging.debug(str(chat_id) + ": " + str(chat.topic))
 
-            # Create QListWidgetItem
-            myQListWidgetItem = QListWidgetItem(self.listWidget_2)
-            # Set size hint
-            myQListWidgetItem.setSizeHint(myQCustomQWidget.sizeHint())
-            # Add QListWidgetItem into QListWidget
-            self.listWidget_2.addItem(myQListWidgetItem)
-            self.listWidget_2.setItemWidget(myQListWidgetItem, myQCustomQWidget)
+                self.map_lstID2chat[self.listWidget_2.count()] = chat
+
+                # Create QCustomQWidget
+                myQCustomQWidget = QCustomQWidget()
+                myQCustomQWidget.setTextUp(str(chat.topic))
+                myQCustomQWidget.setTextDown("Creator: " + str(chat.creator.name))
+                #if hasattr(chat, "picture"):
+                #    local_filename, headers = urllib.request.urlretrieve(chat.picture)
+                #    myQCustomQWidget.setIcon(local_filename)
+                myQCustomQWidget.unsetChBox()
+
+                # Create QListWidgetItem
+                myQListWidgetItem = QListWidgetItem(self.listWidget_2)
+                # Set size hint
+                myQListWidgetItem.setSizeHint(myQCustomQWidget.sizeHint())
+                # Add QListWidgetItem into QListWidget
+                self.listWidget_2.addItem(myQListWidgetItem)
+                self.listWidget_2.setItemWidget(myQListWidgetItem, myQCustomQWidget)
+
+        except Exception as err:
+            logging.critical('Chats lists creation failed: ' + str(err))
+            QMessageBox.critical(QWidget(), "Chats creation failed", str(err))
+            exit(1)
 
 
 
@@ -265,8 +284,6 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
         self.pushButton_add.clicked.connect(self.add_contacts)
-        #print(self.password)
-        #print(self.login)
 
         self.pushButton_remove.hide()
 
@@ -297,7 +314,6 @@ class Ui_MainWindow(object):
 
 
     def retranslateUi(self, MainWindow):
-        _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "DA Skype Manager"))
-        self.pushButton_add.setText(_translate("MainWindow", "Add -->"))
-        self.pushButton_remove.setText(_translate("MainWindow", "Remove <--X"))
+        MainWindow.setWindowTitle("DA Skype Manager")
+        self.pushButton_add.setText("Add -->")
+        self.pushButton_remove.setText("Remove <--X")
