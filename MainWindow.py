@@ -20,6 +20,7 @@ import urllib.request
 import os
 import logging
 import pathlib
+import sys
 
 
 working_dir = "."
@@ -105,9 +106,16 @@ class Ui_MainWindow(object):
 
     def get_contacts_list(self):
 
+        logging.debug('Getting contacts list')
+
         working_dir = str(pathlib.Path(__file__).parent.resolve())
 
-        chats_list = json.load(open(working_dir + "/chats_list.json"))
+        # get only this contacts
+        if os.path.isfile(working_dir + "/chats_list.json"):
+            logging.debug('Getting contacts only fro JSON')
+            chats_list = json.load(open(working_dir + "/chats_list.json", encoding='utf-8'))
+        else:
+            chats_list = []
 
         for c in self.sk.get_contacts():
             if c.id in self.skip_contacts:
@@ -128,26 +136,27 @@ class Ui_MainWindow(object):
             logging.info('Creating contacts list')
             self.get_contacts_list()
             #sort
+            logging.debug('Sorting contacts list')
             self.contacts_list.sort(key=lambda r: r.raw['creation_time'], reverse=True)
 
             for c in self.contacts_list:
-                #print(c.gid + " " + str(c.name) + " " + c.raw['creation_time'])
+                logging.debug(str(c.id) + " " + str(c.name) + " " + c.raw['creation_time'])
 
                 self.map_lstID2contact[self.listWidget.count()] = c
 
                 # Create QCustomQWidget
+                logging.debug("Creating QCustomQWidget")
                 myQCustomQWidget = QCustomQWidget()
 
                 if c.name:
-                    logging.debug(str(c.name))
                     myQCustomQWidget.setTextUp(str(c.name))
                 else:
-                    logging.debug(str(c.id))
                     myQCustomQWidget.setTextUp(str(c.id))
 
                 myQCustomQWidget.setTextDown("Created on: " + self.clean_dt(c.raw['creation_time']))
                 if c.avatar:
                     #pass
+                    logging.debug("getting avatar")
                     local_filename, headers = urllib.request.urlretrieve(c.avatar)
                     myQCustomQWidget.setAvatar_image(local_filename)
                 else:
@@ -170,10 +179,13 @@ class Ui_MainWindow(object):
                 self.listWidget.setItemWidget(myQListWidgetItem, myQCustomQWidget)
 
                 self.listWidget.item(0).setSelected(True)
+
+            logging.debug("Contacts are successfully loaded")
+
         except Exception as err:
             logging.critical('Contacts lists creation failed: ' + str(err))
             QMessageBox.critical(QWidget(), "Contacts creation failed", str(err))
-            exit(1)
+            sys.exit(1)
 
 
 
@@ -182,7 +194,9 @@ class Ui_MainWindow(object):
         try:
             logging.info('Creating chats list')
             working_dir = str(pathlib.Path(__file__).parent.resolve())
-            chats_list = json.load(open(working_dir + "/chats_list.json"))
+
+            logging.debug('Reading chats_list.json')
+            chats_list = json.load(open(working_dir + "/chats_list.json", encoding='utf-8'))
 
             # get Recent chats
             logging.debug("Recent chats ")
@@ -223,7 +237,7 @@ class Ui_MainWindow(object):
         except Exception as err:
             logging.critical('Chats lists creation failed: ' + str(err))
             QMessageBox.critical(QWidget(), "Chats creation failed", str(err))
-            exit(1)
+            sys.exit(1)
 
 
 
@@ -290,7 +304,17 @@ class Ui_MainWindow(object):
         working_dir = str(pathlib.Path(__file__).parent.resolve())
 
         abs_path = os.path.abspath(working_dir + '/ChatManager.log')
-        logging.basicConfig(filename=abs_path, encoding='utf-8', level=logging.DEBUG, force=True)
+
+        root_logger = logging.getLogger()
+        root_logger.setLevel(logging.DEBUG)  # or whatever
+        handler = logging.FileHandler(abs_path, 'a', 'utf-16')  # or whatever
+        handler.setFormatter(logging.Formatter('%(asctime)s: %(levelname)s: %(message)s'))  # or whatever
+        handler.propagate = False
+        root_logger.addHandler(handler)
+
+        logging.info("START---------------------------------------")
+
+        #logging.basicConfig(filename=abs_path, encoding='utf-8', level=logging.DEBUG, force=True)
 
         try:
             self.sk = skype_handler.SkypeHandler()
@@ -299,7 +323,7 @@ class Ui_MainWindow(object):
         except Exception as err:
             logging.critical('Connection Error: ' + str(err))
             QMessageBox.critical(QWidget(), "Connection Error", str(err))
-            exit(1)
+            sys.exit(1)
 
         try:
             self.skip_contacts = ["0d5d6cff-595d-49d7-9cf8-973173f5233b", "echo123", "concierge"]
@@ -308,7 +332,7 @@ class Ui_MainWindow(object):
         except Exception as err:
             logging.critical('Lists creation failed: ' + str(err))
             QMessageBox.critical(QWidget(), "Lists creation failed", str(err))
-            exit(1)
+            sys.exit(1)
 
 
 
